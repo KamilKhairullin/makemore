@@ -19,6 +19,8 @@ class Layer:
         for i in range(epochs):
             predictions = layer.call(x_train)
             loss = calculate_loss(predictions, y_train, num)
+            if loss.item() <= 2.09:
+                break
             print(loss.item())
             layer.W.grad = None
             loss.backward()
@@ -28,8 +30,8 @@ def generate_words(rng, num_classes, layer, itos, bigram_itos, bigram_stoi):
     g = torch.Generator().manual_seed(2147483647)
     out = []
     for i in range(rng):
-        word = ['aa']
-        ix = bigram_stoi['aa']
+        word = ['.a']
+        ix = bigram_stoi['.a']
         while True:
             input_enc = one_hot(torch.tensor([ix]), num_classes = num_classes)
             p = layer.call(input_enc)
@@ -96,13 +98,14 @@ if __name__ == '__main__':
     itos, stoi = make_mappings(names)
     bigram_itos, bigram_stoi = make_bigram_mappings(names)
     xs, ys = create_train_data(names, bigram_stoi, stoi)
-    xs_encoded = one_hot(xs, num_classes = len(bigram_stoi))
+    length = 729#len(bigram_stoi)
+    xs_encoded = one_hot(xs, num_classes = length)
     # 10x729
     # 729 weights x 27 neurons
     # dot product is: 10x27 = 10 outputs with probability of 1 of 27 chars for each output
-    layer = Layer(n_inputs = len(bigram_stoi), n_neurons = 27, g = g)
-    layer.train(xs_encoded, ys, xs.nelement(), 10000)
-    out = generate_words(50, len(bigram_stoi), layer, itos, bigram_itos, bigram_stoi)
+    layer = Layer(n_inputs = length, n_neurons = 27, g = g)
+    layer.train(xs_encoded, ys, xs.nelement(), 5000)
+    out = generate_words(50, length, layer, itos, bigram_itos, bigram_stoi)
     
     for word in out:
         print(word)
